@@ -1,6 +1,7 @@
 visp_ros
 ========
-Modified version of the package `visp_ros` developed by Inria [Rainbow](https://team.inria.fr/rainbow/) team. Now it is possible to interface the library both with the simulated Gazebo environment and with a real robot equipped with a realsense d435 camera for the detection of AprilTag markers. All the new nodes are placed in the following path: `visp_ros/tutorial/franka/coppeliasim/`.
+Modified version of the package `visp_ros` developed by Inria [Rainbow](https://team.inria.fr/rainbow/) team. Now it is possible to interface the library both with the simulated Gazebo environment and with a real robot equipped with a realsense d435 camera for the detection of AprilTag markers. All the new nodes are placed in the following path: `visp_ros/tutorial/franka/coppeliasim/`. 
+The AprilTag models included in the Gazebo simulated environment are included in the following repository: [gazebo_apriltag](https://github.com/koide3/gazebo_apriltag).
 
 visp_ros
 ========
