@@ -30,7 +30,7 @@
  *
  *****************************************************************************/
 
-//! \example tutorial-franka-coppeliasim-pbvs-apriltag.cpp
+//! \example visp-gazebo-apriltag.cpp
 
 #include <iostream>
 
@@ -45,7 +45,8 @@
 #include <visp3/vs/vpServoDisplay.h>
 
 #include <visp_ros/vpROSGrabber.h>
-#include <visp_ros/vpROSRobotFrankaCoppeliasim.h>
+
+using namespace std;
 
 void
 display_point_trajectory( const vpImage< unsigned char > &I, const std::vector< vpImagePoint > &vip,
@@ -78,7 +79,7 @@ display_point_trajectory( const vpImage< unsigned char > &I, const std::vector< 
 int
 main( int argc, char **argv )
 {
-  double opt_tagSize             = 0.08;
+  double opt_tagSize             = 0.1;
   bool display_tag               = true;
   int opt_quad_decimate          = 2;
   bool opt_verbose               = false;
@@ -140,39 +141,16 @@ main( int argc, char **argv )
 
   try
   {
-    //------------------------------------------------------------------------//
-    //------------------------------------------------------------------------//
     // ROS node
-    ros::init( argc, argv, "visp_ros" );
+    ros::init( argc, argv, "gazebo_visp_ros" );
     ros::NodeHandlePtr n = boost::make_shared< ros::NodeHandle >();
     ros::Rate loop_rate( 1000 );
     ros::spinOnce();
 
-    vpROSRobotFrankaCoppeliasim robot;
-    robot.setVerbose( opt_verbose );
-    robot.connect();
-
-    std::cout << "Coppeliasim sync mode enabled: " << ( opt_coppeliasim_sync_mode ? "yes" : "no" ) << std::endl;
-    robot.coppeliasimStopSimulation(); // Allows to reset simulation, moving the robot to initial position
-    robot.setCoppeliasimSyncMode( false );
-    robot.coppeliasimStartSimulation();
-
-    if ( 0 )
-    {
-      robot.setRobotState( vpRobot::STATE_POSITION_CONTROL );
-      vpColVector q;
-      robot.getPosition( vpRobot::JOINT_STATE, q );
-      std::cout << "Initial joint position: " << q.t() << std::endl;
-
-      q[0] += vpMath::rad( 10 ); // Add 10 deg axis 1
-      std::cout << "Move to joint position: " << q.t() << std::endl;
-      robot.setPosition( vpRobot::JOINT_STATE, q );
-    }
-
     vpImage< unsigned char > I;
     vpROSGrabber g;
-    g.setImageTopic( "/coppeliasim/franka/camera/image" );
-    g.setCameraInfoTopic( "/coppeliasim/franka/camera/camera_info" );
+    g.setImageTopic( "/camera/image_raw" );
+    g.setCameraInfoTopic( "/camera/camera_info" );
     g.open( argc, argv );
 
     g.acquire( I );
@@ -209,90 +187,26 @@ main( int argc, char **argv )
     vpFeatureTranslation td( vpFeatureTranslation::cdMc );
     vpFeatureThetaU tud( vpFeatureThetaU::cdRc );
 
-    vpServo task;
-    // Add the visual features
-    task.addFeature( t, td );
-    task.addFeature( tu, tud );
-
-    task.setServo( vpServo::EYEINHAND_CAMERA );
-    task.setInteractionMatrixType( vpServo::CURRENT );
-
-    if ( opt_adaptive_gain )
-    {
-      std::cout << "Enable adaptive gain" << std::endl;
-      vpAdaptiveGain lambda( 4, 1.2, 25 ); // lambda(0)=4, lambda(oo)=1.2 and lambda'(0)=25
-      task.setLambda( lambda );
-    }
-    else
-    {
-      task.setLambda( 1.2 );
-    }
-
-    vpPlot *plotter = nullptr;
-
-    if ( opt_plot )
-    {
-      plotter = new vpPlot( 2, static_cast< int >( 250 * 2 ), 500, static_cast< int >( I.getWidth() ) + 80, 10,
-                            "Real time curves plotter" );
-      plotter->setTitle( 0, "Visual features error" );
-      plotter->setTitle( 1, "Camera velocities" );
-      plotter->initGraph( 0, 6 );
-      plotter->initGraph( 1, 6 );
-      plotter->setLegend( 0, 0, "error_feat_tx" );
-      plotter->setLegend( 0, 1, "error_feat_ty" );
-      plotter->setLegend( 0, 2, "error_feat_tz" );
-      plotter->setLegend( 0, 3, "error_feat_theta_ux" );
-      plotter->setLegend( 0, 4, "error_feat_theta_uy" );
-      plotter->setLegend( 0, 5, "error_feat_theta_uz" );
-      plotter->setLegend( 1, 0, "vc_x" );
-      plotter->setLegend( 1, 1, "vc_y" );
-      plotter->setLegend( 1, 2, "vc_z" );
-      plotter->setLegend( 1, 3, "wc_x" );
-      plotter->setLegend( 1, 4, "wc_y" );
-      plotter->setLegend( 1, 5, "wc_z" );
-    }
-
     bool final_quit                           = false;
     bool has_converged                        = false;
     bool send_velocities                      = false;
     bool servo_started                        = false;
     std::vector< vpImagePoint > *traj_corners = nullptr; // To memorize point trajectory
 
-    double sim_time            = robot.getCoppeliasimSimulationTime();
-    double sim_time_prev       = sim_time;
-    double sim_time_init_servo = sim_time;
-    double sim_time_img        = sim_time;
-
-    if ( 0 )
-    {
-      // Instead of setting eMc from /coppeliasim/franka/eMc topic, we can set its value to introduce noise for example
-      vpHomogeneousMatrix eMc;
-      eMc.buildFrom( 0.05, -0.05, 0, 0, 0, M_PI_4 );
-      robot.set_eMc( eMc );
-    }
-    std::cout << "eMc:\n" << robot.get_eMc() << std::endl;
-
-    robot.setRobotState( vpRobot::STATE_VELOCITY_CONTROL );
-    robot.setCoppeliasimSyncMode( opt_coppeliasim_sync_mode );
-
     while ( !final_quit )
     {
-      sim_time = robot.getCoppeliasimSimulationTime();
-
-      g.acquire( I, sim_time_img );
+      g.acquire( I );
       vpDisplay::display( I );
 
-      std::vector< vpHomogeneousMatrix > cMo_vec; //posa del tag
+      std::vector< vpHomogeneousMatrix > cMo_vec; //posa del tag stimata
       detector.detect( I, opt_tagSize, cam, cMo_vec );
-
+     
       {
         std::stringstream ss;
         ss << "Left click to " << ( send_velocities ? "stop the robot" : "servo the robot" )
            << ", right click to quit.";
         vpDisplay::displayText( I, 20, 20, ss.str(), vpColor::red );
       }
-
-      vpColVector v_c( 6 );
 
       // Only one tag is detected
       if ( cMo_vec.size() == 1 )
@@ -305,6 +219,8 @@ main( int argc, char **argv )
           // Introduce security wrt tag positionning in order to avoid PI rotation
           std::vector< vpHomogeneousMatrix > v_oMo( 2 ), v_cdMc( 2 );
           v_oMo[1].buildFrom( 0, 0, 0, 0, 0, M_PI );
+          // v_oMo[1].buildFrom( 0, 0, 0, 0, 0, 0.0 );
+
           for ( size_t i = 0; i < 2; i++ )
           {
             v_cdMc[i] = cdMo * v_oMo[i] * cMo.inverse();
@@ -326,23 +242,6 @@ main( int argc, char **argv )
         t.buildFrom( cdMc );
         tu.buildFrom( cdMc );
 
-        if ( opt_task_sequencing )
-        {
-          if ( !servo_started )
-          {
-            if ( send_velocities )
-            {
-              servo_started = true;
-            }
-            sim_time_init_servo = robot.getCoppeliasimSimulationTime();
-          }
-          v_c = task.computeControlLaw( robot.getCoppeliasimSimulationTime() - sim_time_init_servo );
-        }
-        else
-        {
-          v_c = task.computeControlLaw();
-        }
-
         // Display the current and desired feature points in the image display
         // Display desired and current pose features
         vpDisplay::displayFrame( I, cdMo * oMo, cam, opt_tagSize / 1.5, vpColor::yellow, 2 );
@@ -362,28 +261,17 @@ main( int argc, char **argv )
         // Display the trajectory of the points used as features
         display_point_trajectory( I, corners, traj_corners );
 
-        if ( opt_plot )
-        {
-          plotter->plot( 0, static_cast< double >( sim_time ), task.getError() );
-          plotter->plot( 1, static_cast< double >( sim_time ), v_c );
-        }
-
-        if ( opt_verbose )
-        {
-          std::cout << "v_c: " << v_c.t() << std::endl;
-        }
-
         vpTranslationVector cd_t_c = cdMc.getTranslationVector();
         vpThetaUVector cd_tu_c     = cdMc.getThetaUVector();
         double error_tr            = sqrt( cd_t_c.sumSquare() );
         double error_tu            = vpMath::deg( sqrt( cd_tu_c.sumSquare() ) );
 
-        std::stringstream ss;
-        ss << "error_t: " << error_tr;
-        vpDisplay::displayText( I, 20, static_cast< int >( I.getWidth() ) - 150, ss.str(), vpColor::red );
-        ss.str( "" );
-        ss << "error_tu: " << error_tu;
-        vpDisplay::displayText( I, 40, static_cast< int >( I.getWidth() ) - 150, ss.str(), vpColor::red );
+        // std::stringstream ss;
+        // ss << "error_t: " << error_tr;
+        // vpDisplay::displayText( I, 20, static_cast< int >( I.getWidth() ) - 150, ss.str(), vpColor::red );
+        // ss.str( "" );
+        // ss << "error_tu: " << error_tu;
+        // vpDisplay::displayText( I, 40, static_cast< int >( I.getWidth() ) - 150, ss.str(), vpColor::red );
 
         if ( opt_verbose )
           std::cout << "error translation: " << error_tr << " ; error rotation: " << error_tu << std::endl;
@@ -400,25 +288,8 @@ main( int argc, char **argv )
         {
           first_time = false;
         }
-      } // end if (cMo_vec.size() == 1)
-      else
-      {
-        v_c = 0; // Stop the robot
-      }
-
-      if ( !send_velocities )
-      {
-        v_c = 0; // Stop the robot
-      }
-
-      robot.setVelocity( vpRobot::CAMERA_FRAME, v_c );
-
-      std::stringstream ss;
-      ss << "Loop time [s]: " << std::round( ( sim_time - sim_time_prev ) * 1000. ) / 1000.;
-      ss << " Simulation time [s]: " << sim_time;
-      sim_time_prev = sim_time;
-      vpDisplay::displayText( I, 40, 20, ss.str(), vpColor::red );
-      
+      } 
+    
       //--mappa il click del mouse per iniziare/fermare il controllo
       vpMouseButton::vpMouseButtonType button;
       if ( vpDisplay::getClick( I, button, false ) )
@@ -431,7 +302,6 @@ main( int argc, char **argv )
 
         case vpMouseButton::button3:
           final_quit = true;
-          v_c        = 0;
           break;
 
         default:
@@ -439,17 +309,9 @@ main( int argc, char **argv )
         }
       }
       //--
-
+      
       vpDisplay::flush( I );
-      robot.wait( sim_time, 0.020 ); // Slow down the loop to simulate a camera at 50 Hz
     }                                // end while
-
-    if ( opt_plot && plotter != nullptr )
-    {
-      delete plotter;
-      plotter = nullptr;
-    }
-    robot.coppeliasimStopSimulation();
 
     if ( !final_quit )
     {

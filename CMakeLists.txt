@@ -192,6 +192,23 @@ target_link_libraries(tutorial-franka-real-joint-impedance-control ${catkin_LIBR
 if(orocos_kdl_FOUND AND (${orocos_kdl_VERSION} VERSION_GREATER ${orocos_kdl_VERSION_MINIMUM}))
   add_executable(tutorial-franka-coppeliasim-ibvs-apriltag tutorial/franka/coppeliasim/tutorial-franka-coppeliasim-ibvs-apriltag.cpp)
   add_executable(tutorial-franka-coppeliasim-pbvs-apriltag tutorial/franka/coppeliasim/tutorial-franka-coppeliasim-pbvs-apriltag.cpp)
+    add_executable(visp-gazebo-apriltag tutorial/franka/coppeliasim/visp_gazebo.cpp)
+    add_executable(ibvs-gazebo tutorial/franka/coppeliasim/ibvs_gazebo.cpp)
+    add_executable(ibvs-gazebo-px4 tutorial/franka/coppeliasim/ibvs_gazebo_px4.cpp)
+    add_executable(ibvs-gazebo-new tutorial/franka/coppeliasim/ibvs_ros.cpp)
+    add_executable(ibvs-ndt2 tutorial/franka/coppeliasim/ibvs_ndt2.cpp)
+    add_executable(ibvs-ros tutorial/franka/coppeliasim/ibvs_ros.cpp)
+    add_executable(ibvs-gazebo-multiple-tag tutorial/franka/coppeliasim/ibvs_gazebo_2tag.cpp)
+    add_executable(ibvs-gazebo2 tutorial/franka/coppeliasim/ibvs_gazebo2.cpp)
+#    
+    add_executable(basic-ibvs tutorial/franka/coppeliasim/basic_ibvs.cpp) 
+    add_executable(basic-ibvs-plot-cts tutorial/franka/coppeliasim/basic_ibvs_plot_cts_gain_adapt.cpp) 
+    add_executable(basic-ibvs-plot tutorial/franka/coppeliasim/basic_ibvs_plot.cpp)  
+    add_executable(basic-ibvs-plot-adapt tutorial/franka/coppeliasim/basic_ibvs_plot_gain_adapt.cpp)  
+    add_executable(ibvs-sim1 tutorial/franka/coppeliasim/ibvs_sim1.cpp)  
+    add_executable(ibvs-sim2 tutorial/franka/coppeliasim/ibvs_sim2.cpp)  
+    add_executable(ibvs-sim3 tutorial/franka/coppeliasim/ibvs_sim3.cpp)
+#      
   add_executable(tutorial-franka-coppeliasim-dual-arm tutorial/franka/coppeliasim/tutorial-franka-coppeliasim-dual-arm.cpp)
   add_executable(tutorial-franka-coppeliasim-joint-impedance-control tutorial/franka/coppeliasim/tutorial-franka-coppeliasim-joint-impedance-control.cpp)
   add_executable(tutorial-franka-coppeliasim-cartesian-impedance-control tutorial/franka/coppeliasim/tutorial-franka-coppeliasim-cartesian-impedance-control.cpp)
@@ -202,6 +219,23 @@ if(orocos_kdl_FOUND AND (${orocos_kdl_VERSION} VERSION_GREATER ${orocos_kdl_VERS
   endif()
   target_link_libraries(tutorial-franka-coppeliasim-ibvs-apriltag ${franka_sim_LIBRARIES})
   target_link_libraries(tutorial-franka-coppeliasim-pbvs-apriltag ${franka_sim_LIBRARIES})
+  target_link_libraries(visp-gazebo-apriltag ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-gazebo ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-gazebo-px4 ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-gazebo-new ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-ndt2 ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-ros ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-gazebo2 ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-gazebo-multiple-tag ${franka_sim_LIBRARIES})
+#  
+  target_link_libraries(basic-ibvs ${franka_sim_LIBRARIES})
+  target_link_libraries(basic-ibvs-plot-cts ${franka_sim_LIBRARIES})
+  target_link_libraries(basic-ibvs-plot ${franka_sim_LIBRARIES})
+  target_link_libraries(basic-ibvs-plot-adapt ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-sim1 ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-sim2 ${franka_sim_LIBRARIES})
+  target_link_libraries(ibvs-sim3 ${franka_sim_LIBRARIES})
+#  
   target_link_libraries(tutorial-franka-coppeliasim-dual-arm ${franka_sim_LIBRARIES})
   target_link_libraries(tutorial-franka-coppeliasim-joint-impedance-control ${franka_sim_LIBRARIES})
   target_link_libraries(tutorial-franka-coppeliasim-cartesian-impedance-control ${franka_sim_LIBRARIES})
@@ -211,6 +245,23 @@ if(orocos_kdl_FOUND AND (${orocos_kdl_VERSION} VERSION_GREATER ${orocos_kdl_VERS
     TARGETS
     tutorial-franka-coppeliasim-ibvs-apriltag
     tutorial-franka-coppeliasim-pbvs-apriltag
+    visp-gazebo-apriltag
+    ibvs-gazebo
+    ibvs-gazebo-px4
+    ibvs-gazebo-new
+    ibvs-ndt2
+    ibvs-ros
+    ibvs-gazebo2
+    ibvs-gazebo-multiple-tag
+#    
+basic-ibvs
+basic-ibvs-plot-cts 
+basic-ibvs-plot
+basic-ibvs-plot-adapt
+ibvs-sim1
+ibvs-sim2
+ibvs-sim3
+#    
     tutorial-franka-coppeliasim-joint-impedance-control
     ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
     LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
